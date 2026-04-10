@@ -26,6 +26,10 @@
         .node { stroke: #fff; stroke-width: 1.5px; cursor: pointer; transition: r 0.3s, fill 0.3s; }
         .label { pointer-events: none; font-size: 11px; fill: #495057; font-weight: 500; }
 
+        /* 노드(Node) 스타일 */
+        .node { stroke: #fff; stroke-width: 1.5px; cursor: pointer; transition: r 0.3s, fill 0.3s; }
+        .label { pointer-events: none; font-size: 11px; fill: #495057; font-weight: 500; }
+
         .info-box { 
             background: #f1f3f5; padding: 15px; border-radius: 8px; 
             margin-top: 20px; line-height: 1.6; font-size: 14px; color: #343a40;
@@ -3779,10 +3783,9 @@ const data = {
 const width = window.innerWidth - 350;
 const height = window.innerHeight;
 
-const svg = d3.select("#canvas").append("svg")
-    .attr("width", width).attr("height", height);
-
+const svg = d3.select("#canvas").append("svg").attr("width", width).attr("height", height);
 const container = svg.append("g");
+
 
 // Zoom 설정
 const zoom = d3.zoom()
@@ -3820,20 +3823,18 @@ const link = container.append("g")
         return 0.3;
     });
 
-// 노드 생성
+// 노드 그리기 (연결성에 따른 크기 반영)
 const node = container.append("g")
     .selectAll("circle")
     .data(data.nodes)
     .join("circle")
     .attr("class", "node")
-    .attr("r", 12)
+    // 기본 반지름 8 + 연결성(degree)의 제곱근에 비례하여 증가
+    .attr("r", d => Math.sqrt(d.degree) * 5 + 8) 
     .attr("fill", "#3498db")
     .on("click", (event, d) => focusNode(d))
-    .call(d3.drag()
-        .on("start", dragstarted)
-        .on("drag", dragged)
-        .on("end", dragended));
-
+    .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
+    
 // 라벨 생성
 const label = container.append("g")
     .selectAll("text")
