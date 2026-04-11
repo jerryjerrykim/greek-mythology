@@ -3873,24 +3873,35 @@ function focusNode(d) {
     selected.transition().duration(500).attr("fill", "#e67e22").attr("r", 20);
 
 
-    // 사이드바 업데이트
+   // 사이드바 업데이트
     document.getElementById("selected-name").innerText = d.id;
     
+    // [수정 포인트] 관계 설명 추출 시 id 참조 방식 보완 및 중복 제거
     const descriptions = data.links
-        .filter(l => l.source.id === d.id || l.target.id === d.id)
+        .filter(l => {
+            // D3 시뮬레이션 이후 source/target이 객체일 경우와 문자열일 경우 모두 대응
+            const sourceId = l.source.id || l.source;
+            const targetId = l.target.id || l.target;
+            return sourceId === d.id || targetId === d.id;
+        })
         .map(l => l.description);
 
+    // 중복 제거
     const uniqueDescriptions = [...new Set(descriptions)];
 
     const infoTextElement = document.getElementById("info-text");
     
     if (uniqueDescriptions.length > 0) {
-        // 중복 제거된 설명을 목록 형태로 변환
         infoTextElement.innerHTML = uniqueDescriptions
             .map(desc => `<div style="margin-bottom: 10px; line-height: 1.6;">• ${desc}</div>`)
             .join("");
     } else {
         infoTextElement.innerText = "연결된 관계 정보가 없습니다.";
+    }
+
+    // [필수 추가] 이미지 로드 함수 호출 (현재 코드에서 누락된 경우 추가 필요)
+    if (typeof fetchWikiImage === "function") {
+        fetchWikiImage(d.id);
     }
     
 
