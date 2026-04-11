@@ -3875,7 +3875,10 @@ function focusNode(d) {
 
     // 사이드바 업데이트
     document.getElementById("selected-name").innerText = d.id;
-    const interactions = data.links.filter(l => l.source.id === d.id || l.target.id === d.id);
+    
+    const descriptions = data.links
+        .filter(l => l.source.id === d.id || l.target.id === d.id)
+        .map(l => l.description);
     
     if (interactions.length > 0) {
         const uniqueDescs = [...new Set(interactions.map(l => l.description))];
