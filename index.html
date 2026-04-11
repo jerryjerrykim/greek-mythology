@@ -3552,12 +3552,19 @@ const node = container.append("g").selectAll("g")
 
 node.append("circle")
     .attr("r", d => 10 + Math.min(d.count * 1.5, 20))
-    .attr("fill", d => d.count > 8 ? "#e74c3c" : "#3498db");
+    .attr("fill", d => d.count > 15 ? "#e74c3c" : "#3498db");
 
 node.append("text")
     .attr("dy", d => 20 + Math.min(d.count * 1.5, 20))
     .attr("text-anchor", "middle")
     .text(d => d.id.split('(')[0]);
+
+node.selected circle {
+        fill: #f1c40f !important; /* 선명한 노란색 */
+        stroke: #f39c12;        /* 주황색 테두리 */
+        stroke-width: 4px;       /* 테두리 두께 강화 */
+        filter: drop-shadow(0 0 10px rgba(241, 196, 15, 0.8)); /* 발광 효과 */
+    }
 
 simulation.on("tick", () => {
     link.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
