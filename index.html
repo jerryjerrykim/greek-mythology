@@ -3858,16 +3858,46 @@ function focusNode(d) {
     const selected = node.filter(n => n.id === d.id);
     selected.transition().duration(500).attr("fill", "#e67e22").attr("r", 20);
 
-    // 사이드바 업데이트
+    // 1. 기존 시각적 강조 및 사이드바 이름 설정 (유지)
     document.getElementById("selected-name").innerText = d.id;
-    const interactions = data.links.filter(l => l.source.id === d.id || l.target.id === d.id);
     
-    if (interactions.length > 0) {
-        const uniqueDescs = [...new Set(interactions.map(l => l.description))];
-        document.getElementById("info-text").innerHTML = `<div class='info-box'>${uniqueDescs.join("<br><br>")}</div>`;
+    // 2. 해당 인물과 관련된 모든 description을 가져와서 하나로 합침
+    const rawDescriptions = data.links
+        .filter(l => {
+            const sId = l.source.id || l.source;
+            const tId = l.target.id || l.target;
+            return sId === d.id || tId === d.id;
+        })
+        .map(l => l.description)
+        .join(" "); // 모든 설명을 하나의 긴 문자열로 합침
+
+    // 3. [핵심] 마침표를 기준으로 문장을 나누고, 중복 제거 후 다시 합침
+    // 문장 단위로 분리 -> 앞뒤 공백 제거 -> 빈 문장 제외 -> 중복 제거(Set)
+    const sentences = rawDescriptions.split('.')
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+    
+    const uniqueSentences = [...new Set(sentences)];
+
+    // 4. 사이드바에 출력
+    const infoTextElement = document.getElementById("info-text");
+    if (uniqueSentences.length > 0) {
+        infoTextElement.innerHTML = uniqueSentences
+            .map(s => `<div style="margin-bottom: 10px; line-height: 1.6;">• ${s}.</div>`)
+            .join("");
     } else {
-        document.getElementById("info-text").innerHTML = "<p>기록된 상호작용 정보가 없습니다.</p>";
+        infoTextElement.innerText = "연결된 관계 정보가 없습니다.";
     }
+
+    // 이미지 로드 및 화면 이동 (기본 코드 유지)
+    if (typeof fetchWikiImage === "function") fetchWikiImage(d.id);
+    
+    const scale = 1.5;
+    svg.transition().duration(1000).call(
+        zoom.transform,
+        d3.zoomIdentity.translate(width / 2 - d.x * scale, height / 2 - d.y * scale).scale(scale)
+    );
+}
 
     // 중앙 이동 (Smooth Zoom)
     const scale = 1.5;
