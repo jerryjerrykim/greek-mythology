@@ -3531,12 +3531,14 @@ const container = svg.append("g");
 const zoom = d3.zoom().scaleExtent([0.1, 5]).on("zoom", (e) => container.attr("transform", e.transform));
 svg.call(zoom);
 
-// --- 2. 시뮬레이션 설정 ---
+     // 시뮬레이션 최적화 (외톨이 방지 로직 포함)
 const simulation = d3.forceSimulation(data.nodes)
-    .force("link", d3.forceLink(data.links).id(d => d.id).distance(150))
-    .force("charge", d3.forceManyBody().strength(-400))
+    .force("link", d3.forceLink(data.links).id(d => d.id).distance(100))
+    .force("charge", d3.forceManyBody().strength(-150)) // 밀어내는 힘 약화
     .force("center", d3.forceCenter(width / 2, height / 2))
-    .force("collision", d3.forceCollide().radius(d => 15 + (d.count * 2)));
+    .force("x", d3.forceX(width / 2).strength(0.1)) // 외톨이를 가로 중앙으로 당김
+    .force("y", d3.forceY(height / 2).strength(0.1)) // 외톨이를 세로 중앙으로 당김
+    .force("collision", d3.forceCollide().radius(35));
 
 // --- 3. 렌더링 ---
 const link = container.append("g").selectAll("line")
