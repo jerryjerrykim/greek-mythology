@@ -2,32 +2,50 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>불핀치의 그리스 로마 신화 관계도</title>
+    <title>불핀치의 그리스 로마 신화 관계도 - Optimized</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
-        body { font-family: 'Pretendard', sans-serif; margin: 0; overflow: hidden; display: flex; background-color: #f8f9fa; }
-        #canvas { flex-grow: 1; height: 100vh; cursor: grab; }
+        :root {
+            --primary: #3498db;
+            --accent: #e67e22;
+            --bg: #f8f9fa;
+            --text: #2c3e50;
+        }
+        body { font-family: 'Pretendard', sans-serif; margin: 0; overflow: hidden; display: flex; background-color: var(--bg); }
+        #canvas { flex-grow: 1; height: 100vh; cursor: grab; background: radial-gradient(#ffffff 0%, #ececec 100%); }
         #canvas:active { cursor: grabbing; }
         
         #sidebar { 
             width: 350px; background: white; border-left: 1px solid #dee2e6; 
-            padding: 25px; box-shadow: -2px 0 10px rgba(0,0,0,0.05); 
-            overflow-y: auto; display: flex; flex-direction: column;
+            padding: 25px; box-shadow: -5px 0 15px rgba(0,0,0,0.05); 
+            overflow-y: auto; display: flex; flex-direction: column; z-index: 10;
         }
         
-        h2 { color: #2c3e50; margin-top: 0; font-size: 1.5rem; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
-        .search-container { margin-bottom: 20px; display: flex; gap: 5px; }
-        #search-input { flex: 1; padding: 10px; border: 1px solid #ced4da; border-radius: 4px; outline: none; }
-        button { padding: 8px 15px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        h2 { color: var(--text); margin-top: 0; font-size: 1.4rem; border-bottom: 3px solid var(--primary); padding-bottom: 10px; }
+        .search-container { margin-bottom: 20px; display: flex; gap: 8px; }
+        #search-input { 
+            flex: 1; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; 
+            outline: none; transition: border 0.2s;
+        }
+        #search-input:focus { border-color: var(--primary); }
+        button { 
+            padding: 0 15px; background: var(--primary); color: white; border: none; 
+            border-radius: 8px; cursor: pointer; font-weight: bold;
+        }
+        button:hover { background: #2980b9; }
         
-        #info-card { background: #fdfdfd; border-radius: 8px; padding: 15px; border: 1px solid #eee; }
-        #char-img { width: 100%; border-radius: 8px; margin-bottom: 15px; display: none; object-fit: cover; max-height: 250px; }
-        #img-loading { color: #888; font-size: 0.9rem; text-align: center; margin-bottom: 10px; }
-        #char-desc { font-size: 0.95rem; line-height: 1.6; color: #444; }
+        #info-card { background: #fff; border-radius: 12px; padding: 20px; border: 1px solid #f0f0f0; box-shadow: inset 0 0 10px rgba(0,0,0,0.02); }
+        #char-img-container { width: 100%; height: 220px; background: #eee; border-radius: 8px; margin-bottom: 15px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        #char-img { width: 100%; height: 100%; object-fit: contain; display: none; }
+        #img-loading { color: #95a5a6; font-size: 0.9rem; text-align: center; }
+        #char-name { font-size: 1.3rem; margin: 10px 0; color: var(--text); }
+        #char-desc { font-size: 0.95rem; line-height: 1.7; color: #555; }
+        .rel-item { margin-bottom: 8px; padding-left: 12px; border-left: 3px solid #eee; }
 
-        .node circle { stroke: #fff; stroke-width: 2px; cursor: pointer; transition: r 0.3s; }
-        .node text { font-size: 11px; pointer-events: none; fill: #555; font-weight: 500; }
-        .link { stroke: #bbb; stroke-opacity: 0.4; }
+        /* SVG Styles */
+        .node circle { stroke: #fff; stroke-width: 2.5px; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .node text { font-size: 12px; pointer-events: none; fill: #333; font-weight: 600; text-shadow: 0 1px 2px white; }
+        .link { stroke: #cbd5e0; stroke-opacity: 0.5; transition: stroke 0.3s, stroke-width 0.3s; }
     </style>
 </head>
 <body>
@@ -35,15 +53,17 @@
 <svg id="canvas"></svg>
 
 <div id="sidebar">
-    <h2>인물 정보</h2>
+    <h2>그리스 로마 신화 관계도</h2>
     <div class="search-container">
-        <input type="text" id="search-input" placeholder="이름 검색 (예: 주피터)">
+        <input type="text" id="search-input" placeholder="인물 검색 (예: 주피터)">
         <button onclick="searchNode()">검색</button>
     </div>
     <div id="info-card">
-        <div id="img-loading">인물을 클릭하세요</div>
-        <img id="char-img" src="" alt="character image">
-        <h3 id="char-name" style="margin-top:0;">대상을 선택하세요</h3>
+        <div id="char-img-container">
+            <div id="img-loading">인물을 선택하세요</div>
+            <img id="char-img" src="" alt="character image">
+        </div>
+        <h3 id="char-name">대상을 선택하세요</h3>
         <div id="char-desc">관계도에서 노드를 클릭하면 상세 정보가 나타납니다.</div>
     </div>
 </div>
@@ -3513,9 +3533,18 @@ const data = {
 }
 
 
+// --- 설정 및 색상 스케일 ---
 const sidebarWidth = 350;
 const width = window.innerWidth - sidebarWidth;
 const height = window.innerHeight;
+
+// 연결 중심성 계산 (인기도에 따른 노드 크기 조절)
+data.nodes.forEach(n => {
+    n.count = data.links.filter(l => l.source === n.id || l.target === n.id).length;
+});
+
+const colorScale = d3.scaleOrdinal(d3.schemeTableau10);
+const sizeScale = d3.scaleLinear().domain([0, 15]).range([8, 25]);
 
 const svg = d3.select("#canvas")
     .attr("width", width)
@@ -3525,29 +3554,27 @@ const container = svg.append("g");
 
 // 줌 설정
 const zoom = d3.zoom()
-    .scaleExtent([0.1, 5])
+    .scaleExtent([0.1, 4])
     .on("zoom", (event) => container.attr("transform", event.transform));
 svg.call(zoom);
 
 // 시뮬레이션 설정 (밀집도 개선)
 const simulation = d3.forceSimulation(data.nodes)
-    .force("link", d3.forceLink(data.links).id(d => d.id).distance(100))
-    .force("charge", d3.forceManyBody().strength(-300))
+    .force("link", d3.forceLink(data.links).id(d => d.id).distance(120))
+    .force("charge", d3.forceManyBody().strength(-400))
     .force("center", d3.forceCenter(width / 2, height / 2))
-    .force("collision", d3.forceCollide().radius(40));
+    .force("collision", d3.forceCollide().radius(d => sizeScale(d.count) + 20));
 
 // 선 그리기
 const link = container.append("g")
-    .attr("class", "links")
     .selectAll("line")
     .data(data.links)
     .join("line")
     .attr("class", "link")
-    .attr("stroke-width", d => Math.sqrt(d.value) + 1);
+    .attr("stroke-width", d => Math.sqrt(d.value) + 1.5);
 
-// 노드 그리기
+// 노드 그룹
 const node = container.append("g")
-    .attr("class", "nodes")
     .selectAll("g")
     .data(data.nodes)
     .join("g")
@@ -3558,14 +3585,16 @@ const node = container.append("g")
         .on("drag", dragged)
         .on("end", dragended));
 
+// 노드 원형
 node.append("circle")
-    .attr("r", 12)
-    .attr("fill", "#3498db");
+    .attr("r", d => sizeScale(d.count))
+    .attr("fill", (d, i) => d.count > 5 ? "#2980b9" : "#3498db");
 
+// 노드 텍스트 (한글 이름만)
 node.append("text")
-    .attr("dy", 25)
+    .attr("dy", d => sizeScale(d.count) + 15)
     .attr("text-anchor", "middle")
-    .text(d => d.id.split('(')[0]); // 가독성을 위해 한글 이름만 표시
+    .text(d => d.id.split('(')[0]);
 
 simulation.on("tick", () => {
     link
@@ -3577,41 +3606,42 @@ simulation.on("tick", () => {
     node.attr("transform", d => `translate(${d.x},${d.y})`);
 });
 
-// 핵심 기능: 노드 클릭 시 강조 및 정보 표시
+// --- 핵심 로직: 노드 포커스 ---
 function focusNode(d) {
-    // 1. 시각적 강조
-    link.transition().duration(300)
-        .style("stroke-opacity", l => (l.source.id === d.id || l.target.id === d.id) ? 1 : 0.1)
-        .style("stroke", l => (l.source.id === d.id || l.target.id === d.id) ? "#e67e22" : "#bbb");
+    // 1. 시각적 하이라이트
+    const connectedNodeIds = new Set();
+    connectedNodeIds.add(d.id);
     
-    node.selectAll("circle").transition().duration(300)
-        .attr("r", n => n.id === d.id ? 20 : 12)
-        .style("opacity", n => {
-            const isConnected = data.links.some(l => 
-                (l.source.id === d.id && l.target.id === n.id) || 
-                (l.target.id === d.id && l.source.id === n.id)
-            );
-            return (n.id === d.id || isConnected) ? 1 : 0.2;
-        });
+    link.transition().duration(400)
+        .style("stroke-opacity", l => {
+            if (l.source.id === d.id || l.target.id === d.id) {
+                connectedNodeIds.add(l.source.id);
+                connectedNodeIds.add(l.target.id);
+                return 1;
+            }
+            return 0.1;
+        })
+        .style("stroke", l => (l.source.id === d.id || l.target.id === d.id) ? "#e67e22" : "#cbd5e0")
+        .attr("stroke-width", l => (l.source.id === d.id || l.target.id === d.id) ? 3 : 1);
+    
+    node.transition().duration(400)
+        .style("opacity", n => connectedNodeIds.has(n.id) ? 1 : 0.1);
 
-    // 2. 사이드바 텍스트 업데이트
+    // 2. 사이드바 업데이트
     document.getElementById("char-name").innerText = d.id;
     
-    const descriptions = data.links
-        .filter(l => l.source.id === d.id || l.target.id === d.id)
-        .map(l => l.description)
-        .join(" ");
-
-    const uniqueSentences = [...new Set(descriptions.split('.').map(s => s.trim()).filter(s => s.length > 0))];
+    // 관계 설명 추출 및 중복 제거
+    const rels = data.links.filter(l => l.source.id === d.id || l.target.id === d.id);
+    const descriptions = rels.map(l => l.description).join(" ");
+    const uniqueSentences = [...new Set(descriptions.split('.').map(s => s.trim()).filter(s => s.length > 5))];
 
     document.getElementById("char-desc").innerHTML = uniqueSentences.length > 0 
-        ? uniqueSentences.map(s => `<div style="margin-bottom:10px;">• ${s}.</div>`).join("")
-        : "연결된 상세 관계 정보가 없습니다.";
+        ? uniqueSentences.map(s => `<div class="rel-item">• ${s}.</div>`).join("")
+        : "상세 관계 정보가 등록되지 않았습니다.";
 
-    // 3. 이미지 업데이트 함수 호출
     updateSidebarImage(d.id);
 
-    // 4. 화면 중앙 이동
+    // 3. 화면 이동
     const scale = 1.2;
     svg.transition().duration(750).call(
         zoom.transform,
@@ -3619,13 +3649,13 @@ function focusNode(d) {
     );
 }
 
-// 위키피디아 이미지 연동 함수
+// --- 위키피디아 API 최적화 ---
 async function updateSidebarImage(name) {
     const imgElement = document.getElementById("char-img");
     const loadingText = document.getElementById("img-loading");
 
     imgElement.style.display = "none";
-    loadingText.innerText = "이미지를 불러오는 중...";
+    loadingText.innerText = "이미지를 찾는 중...";
 
     const krName = name.split('(')[0].trim();
     const enMatch = name.match(/\(([^)]+)\)/);
@@ -3633,12 +3663,12 @@ async function updateSidebarImage(name) {
 
     try {
         let json = null;
-        // 영문 이름 우선 검색
+        // 1. 영어 위키 우선 (이미지 퀄리티가 높음)
         if (enName) {
             let res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(enName)}`);
             if (res.ok) json = await res.json();
         }
-        // 한글 이름 검색
+        // 2. 한국어 위키 차선
         if (!json || !json.thumbnail) {
             let res = await fetch(`https://ko.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(krName)}`);
             if (res.ok) json = await res.json();
@@ -3649,14 +3679,14 @@ async function updateSidebarImage(name) {
             imgElement.style.display = "block";
             loadingText.innerText = "";
         } else {
-            loadingText.innerText = "이미지 정보 없음";
+            loadingText.innerText = "이미지가 없습니다";
         }
     } catch (e) {
-        loadingText.innerText = "이미지 로드 실패";
+        loadingText.innerText = "로딩 실패";
     }
 }
 
-// 검색 기능
+// --- 보조 기능 (검색, 드래그, 리사이즈) ---
 function searchNode() {
     const val = document.getElementById("search-input").value.trim().toLowerCase();
     if (!val) return;
@@ -3667,12 +3697,10 @@ function searchNode() {
 
 document.getElementById("search-input").addEventListener("keypress", (e) => { if (e.key === "Enter") searchNode(); });
 
-// 드래그 함수
 function dragstarted(event, d) { if (!event.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
 function dragged(event, d) { d.fx = event.x; d.fy = event.y; }
 function dragended(event, d) { if (!event.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }
 
-// 윈도우 리사이즈 대응
 window.addEventListener('resize', () => {
     const newWidth = window.innerWidth - sidebarWidth;
     const newHeight = window.innerHeight;
