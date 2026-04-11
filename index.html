@@ -3918,27 +3918,7 @@ async function fetchWikiImage(name) {
     }
 }
 
-// 검색 기능 (기존 코드 시작)
-function searchNode() {
-/* ... 이하 생략 ... */
-2. 반드시 해야 할 '연결' 작업
-함수를 정의만 해서는 작동하지 않습니다. focusNode 함수가 실행될 때 이 API 함수도 같이 실행되도록 호출 코드를 한 줄 추가해야 합니다.
 
-focusNode(d) 함수 안의 적당한 위치(예: 사이드바 텍스트를 업데이트하는 곳 근처)에 아래 한 줄을 넣어주세요.
-
-JavaScript
-function focusNode(d) {
-    /* ... 기존 강조 로직 ... */
-
-    // [중요] 노드를 클릭하거나 검색했을 때 API를 호출하도록 연결
-    fetchWikiImage(d.id); 
-
-    /* ... 기존 사이드바 텍스트 업데이트 로직 ... */
-}
-3. HTML 구조 확인 (사이드바)
-이미지를 보여줄 <img> 태그가 사이드바(<div id="sidebar">) 내부에 있어야 합니다. selected-name (인물 이름) 바로 아래에 아래 구조가 있는지 확인해 주세요.
-
-HTML
 <div id="sidebar">
     <h2>인물 검색</h2>
     <div id="info-panel">
@@ -3966,6 +3946,8 @@ function searchNode() {
     } else {
         alert(`'${name}'(을)를 포함한 인물을 찾을 수 없습니다.`);
     }
+
+        fetchWikiImage(d.id); 
 }
 
 // 엔터키 지원
