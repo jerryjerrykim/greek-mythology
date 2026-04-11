@@ -3879,13 +3879,20 @@ function focusNode(d) {
     const descriptions = data.links
         .filter(l => l.source.id === d.id || l.target.id === d.id)
         .map(l => l.description);
+
+    const uniqueDescriptions = [...new Set(descriptions)];
+
+    const infoTextElement = document.getElementById("info-text");
     
-    if (interactions.length > 0) {
-        const uniqueDescs = [...new Set(interactions.map(l => l.description))];
-        document.getElementById("info-text").innerHTML = `<div class='info-box'>${uniqueDescs.join("<br><br>")}</div>`;
+    if (uniqueDescriptions.length > 0) {
+        // 중복 제거된 설명을 목록 형태로 변환
+        infoTextElement.innerHTML = uniqueDescriptions
+            .map(desc => `<div style="margin-bottom: 10px; line-height: 1.6;">• ${desc}</div>`)
+            .join("");
     } else {
-        document.getElementById("info-text").innerHTML = "<p>기록된 상호작용 정보가 없습니다.</p>";
+        infoTextElement.innerText = "연결된 관계 정보가 없습니다.";
     }
+    
 
     // 중앙 이동 (Smooth Zoom)
     const scale = 1.5;
