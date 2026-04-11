@@ -3558,13 +3558,25 @@ node.append("text")
     .attr("dy", d => 20 + Math.min(d.count * 1.5, 20))
     .attr("text-anchor", "middle")
     .text(d => d.id.split('(')[0]);
-
-node.selected circle {
+     
+  /* 선택된 노드 (노란색 🔴) */
+    .node.selected circle {
         fill: #f1c40f !important; /* 선명한 노란색 */
         stroke: #f39c12;        /* 주황색 테두리 */
         stroke-width: 4px;       /* 테두리 두께 강화 */
         filter: drop-shadow(0 0 10px rgba(241, 196, 15, 0.8)); /* 발광 효과 */
     }
+  /* 선택되지 않은 나머지 노드 (반투명 ⚪) */
+    .node.dimmed {
+        opacity: 0.2;
+    }
+
+    /* 연결되지 않은 링크 (반투명 ⚪) */
+    .link.dimmed {
+        stroke-opacity: 0.1;
+    }
+
+     
 
 simulation.on("tick", () => {
     link.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
@@ -3574,15 +3586,32 @@ simulation.on("tick", () => {
 
 // --- 4. 인터랙션 함수 ---
 function focusNode(d) {
-    // 하이라이트 효과
+    // [추가된 로직 1] 기존 하이라이트 초기화
+    node.classed("selected", false).classed("dimmed", false);
+    link.classed("dimmed", false);
+
+    // [추가된 로직 2] 선택된 노드에 'selected' 클래스 추가
+    node.filter(n => n.id === d.id).classed("selected", true);
+
+    // 하이라이트 대상 식별 (본인 + 연결된 인물)
     const connectedNodeIds = new Set([d.id]);
     data.links.forEach(l => {
         if (l.source.id === d.id) connectedNodeIds.add(l.target.id);
         if (l.target.id === d.id) connectedNodeIds.add(l.source.id);
     });
 
-    node.transition().duration(400).style("opacity", n => connectedNodeIds.has(n.id) ? 1 : 0.1);
-    link.transition().duration(400).style("stroke-opacity", l => (l.source.id === d.id || l.target.id === d.id) ? 1 : 0.05);
+    // [추가된 로직 3] 선택되지 않은 노드/링크에 'dimmed' 클래스 추가
+    node.filter(n => !connectedNodeIds.has(n.id)).classed("dimmed", true);
+    link.filter(l => l.source.id !== d.id && l.target.id !== d.id).classed("dimmed", true);
+
+// [추가된 로직 4] 선택된 노드의 크기를 동적으로 확대 (기존 크기 * 1.5배)
+    node.selectAll("circle")
+        .transition().duration(400)
+        .attr("r", n => {
+            const baseRadius = 10 + Math.min(n.count * 1.5, 20);
+            return n.id === d.id ? baseRadius * 1.5 : baseRadius; 
+        });
+
 
     // 사이드바 업데이트
     document.getElementById("char-name").innerText = d.id;
