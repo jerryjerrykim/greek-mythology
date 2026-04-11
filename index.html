@@ -3872,25 +3872,25 @@ function focusNode(d) {
     const selected = node.filter(n => n.id === d.id);
     selected.transition().duration(500).attr("fill", "#e67e22").attr("r", 20);
 
-
-   // 사이드바 업데이트
+    
+    // 1. 사이드바 이름 업데이트
     document.getElementById("selected-name").innerText = d.id;
     
-    // [수정 포인트] 관계 설명 추출 시 id 참조 방식 보완 및 중복 제거
+    // 2. [수정 핵심] 객체와 문자열 케이스를 모두 대응하여 필터링
     const descriptions = data.links
         .filter(l => {
-            // D3 시뮬레이션 이후 source/target이 객체일 경우와 문자열일 경우 모두 대응
-            const sourceId = l.source.id || l.source;
-            const targetId = l.target.id || l.target;
-            return sourceId === d.id || targetId === d.id;
+            // source와 target이 객체일 경우 .id를 참조하고, 아닐 경우 값 자체를 참조
+            const sId = (typeof l.source === 'object') ? l.source.id : l.source;
+            const tId = (typeof l.target === 'object') ? l.target.id : l.target;
+            return sId === d.id || tId === d.id;
         })
         .map(l => l.description);
 
-    // 중복 제거
+    // 3. 중복된 설명 제거
     const uniqueDescriptions = [...new Set(descriptions)];
 
+    // 4. 사이드바 내용 출력
     const infoTextElement = document.getElementById("info-text");
-    
     if (uniqueDescriptions.length > 0) {
         infoTextElement.innerHTML = uniqueDescriptions
             .map(desc => `<div style="margin-bottom: 10px; line-height: 1.6;">• ${desc}</div>`)
@@ -3899,11 +3899,11 @@ function focusNode(d) {
         infoTextElement.innerText = "연결된 관계 정보가 없습니다.";
     }
 
-    // [필수 추가] 이미지 로드 함수 호출 (현재 코드에서 누락된 경우 추가 필요)
+    // 5. 위키피디아 이미지 업데이트 연동
     if (typeof fetchWikiImage === "function") {
         fetchWikiImage(d.id);
     }
-    
+  
 
     // 중앙 이동 (Smooth Zoom)
     const scale = 1.5;
