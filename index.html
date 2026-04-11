@@ -3636,33 +3636,52 @@ function focusNode(d) {
 }
 
 // 핵심 기능 2: 위키피디아 이미지 로드
-async function fetchWikiImage(name) {
-    const imgElement = document.getElementById("char-image");
-    const loadingText = document.getElementById("image-loading");
-    imgElement.style.display = "none";
-    loadingText.innerText = "이미지 검색 중...";
+async function updateSidebar(name, desc) {
+    document.getElementById("char-name").innerText = name;
+    document.getElementById("char-desc").innerText = desc || "설명이 없습니다.";
+    const imgElement = document.getElementById("char-img");
+    const loadingText = document.getElementById("img-loading");
 
-    const cleanName = name.split('(')[0].trim();
+    imgElement.style.display = "none";
+    loadingText.innerText = "이미지 불러오는 중...";
+
+    // 이름 분리 (예: "주피터(Jupiter)" -> kr: "주피터", en: "Jupiter")
+    const hasParentheses = name.includes('(');
+    const krName = name.split('(')[0].trim();
+    const enName = hasParentheses ? name.split('(')[1].replace(')', '').trim() : null;
+
     try {
-        let res = await fetch(`https://ko.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(cleanName)}`);
-        let json = await res.json();
-        
-        if (!json.thumbnail) {
-            const enName = name.includes('(') ? name.split('(')[1].replace(')', '') : cleanName;
-            res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(enName)}`);
-            json = await res.json();
+        let json = null;
+
+        // 1순위: 로마 이름(영문)이 있다면 먼저 검색 시도
+        if (enName) {
+            let res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(enName)}`);
+            if (res.ok) {
+                json = await res.json();
+            }
         }
 
-        if (json.thumbnail) {
+        // 2순위: 로마 이름 검색 결과가 없거나 로마 이름이 없는 경우 한글 이름으로 검색 시도
+        if (!json || !json.thumbnail) {
+            let res = await fetch(`https://ko.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(krName)}`);
+            if (res.ok) {
+                json = await res.json();
+            }
+        }
+
+        // 최종 결과 출력
+        if (json && json.thumbnail) {
             imgElement.src = json.thumbnail.source;
             imgElement.style.display = "block";
             loadingText.innerText = "";
         } else {
             loadingText.innerText = "이미지 없음";
         }
-    } catch (e) { loadingText.innerText = "로드 실패"; }
+    } catch (e) {
+        console.error("이미지 로드 실패:", e);
+        loadingText.innerText = "로드 실패";
+    }
 }
-
 function searchNode() {
     const val = document.getElementById("search-input").value.trim().toLowerCase();
     if (!val) return;
