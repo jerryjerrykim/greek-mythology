@@ -18,46 +18,35 @@
         h2 { color: #2c3e50; margin-top: 0; font-size: 1.5rem; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
         .search-container { margin-bottom: 20px; display: flex; gap: 5px; }
         #search-input { flex: 1; padding: 10px; border: 1px solid #ced4da; border-radius: 4px; outline: none; }
-        button { padding: 10px 15px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; transition: 0.2s; }
-        button:hover { background: #2980b9; }
-
-        #info-panel { margin-top: 10px; }
-        #selected-name { font-size: 1.3rem; margin-bottom: 10px; color: #34495e; }
-        #image-container { 
-            text-align: center; margin: 15px 0; min-height: 180px; 
-            background: #f8f9fa; border-radius: 8px; display: flex; 
-            align-items: center; justify-content: center; overflow: hidden; border: 1px solid #eee;
-        }
-        #char-image { max-width: 100%; max-height: 250px; border-radius: 8px; display: none; }
-        #info-text { line-height: 1.7; color: #444; background: #fdfdfd; padding: 15px; border-radius: 6px; border: 1px solid #eee; min-height: 100px; }
+        button { padding: 8px 15px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; }
         
-        /* D3 스타일 */
-        .node circle { stroke: #fff; stroke-width: 2px; transition: r 0.3s, fill 0.3s; cursor: pointer; }
-        .node text { font-size: 11px; fill: #495057; font-weight: 500; pointer-events: none; }
-        .link { stroke: #adb5bd; stroke-opacity: 0.3; transition: stroke 0.3s, stroke-opacity 0.3s; }
+        #info-card { background: #fdfdfd; border-radius: 8px; padding: 15px; border: 1px solid #eee; }
+        #char-img { width: 100%; border-radius: 8px; margin-bottom: 15px; display: none; object-fit: cover; max-height: 250px; }
+        #img-loading { color: #888; font-size: 0.9rem; text-align: center; margin-bottom: 10px; }
+        #char-desc { font-size: 0.95rem; line-height: 1.6; color: #444; }
+
+        .node circle { stroke: #fff; stroke-width: 2px; cursor: pointer; }
+        .node text { font-size: 12px; pointer-events: none; fill: #333; }
+        .link { stroke: #bbb; stroke-opacity: 0.4; stroke-width: 1.5px; }
     </style>
 </head>
 <body>
 
-<div id="canvas"></div>
+<svg id="canvas"></svg>
 
 <div id="sidebar">
-    <h2>그리스 로마 신화</h2>
+    <h2>인물 정보</h2>
     <div class="search-container">
-        <input type="text" id="search-input" placeholder="이름 검색...">
+        <input type="text" id="search-input" placeholder="이름 검색 (예: 주피터)">
         <button onclick="searchNode()">검색</button>
     </div>
-    
-    <div id="info-panel">
-        <h3 id="selected-name">인물을 선택하세요</h3>
-        <div id="image-container">
-            <img id="char-image" src="">
-            <span id="image-loading" style="font-size: 12px; color: #888;"></span>
-        </div>
-        <div id="info-text">관계도의 노드를 클릭하거나 검색해 보세요.</div>
+    <div id="info-card">
+        <div id="img-loading">인물을 클릭하세요</div>
+        <img id="char-img" src="" alt="character image">
+        <h3 id="char-name" style="margin-top:0;">대상을 선택하세요</h3>
+        <p id="char-desc">관계도에서 노드를 클릭하면 상세 정보가 나타납니다.</p>
     </div>
-        </div>
-
+</div>
 
 <script>
 // 데이터 객체 (제리님이 추출한 전체 데이터를 여기에 넣으세요)
@@ -3635,41 +3624,36 @@ function focusNode(d) {
     );
 }
 
-// 핵심 기능 2: 위키피디아 이미지 로드
+// 핵심 수정 부분: 로마 이름 우선 검색 로직
 async function updateSidebar(name, desc) {
     document.getElementById("char-name").innerText = name;
-    document.getElementById("char-desc").innerText = desc || "설명이 없습니다.";
+    document.getElementById("char-desc").innerText = desc;
     const imgElement = document.getElementById("char-img");
     const loadingText = document.getElementById("img-loading");
 
     imgElement.style.display = "none";
-    loadingText.innerText = "이미지 불러오는 중...";
+    loadingText.innerText = "이미지 검색 중 (로마 이름 우선)...";
 
-    // 이름 분리 (예: "주피터(Jupiter)" -> kr: "주피터", en: "Jupiter")
-    const hasParentheses = name.includes('(');
+    // 이름 분리 로직 (예: "주피터(Jupiter)" -> kr: "주피터", en: "Jupiter")
     const krName = name.split('(')[0].trim();
-    const enName = hasParentheses ? name.split('(')[1].replace(')', '').trim() : null;
+    const enMatch = name.match(/\(([^)]+)\)/);
+    const enName = enMatch ? enMatch[1].trim() : null;
 
     try {
         let json = null;
 
-        // 1순위: 로마 이름(영문)이 있다면 먼저 검색 시도
+        // 1. 로마 이름(영문)이 있으면 영문 위키피디아 먼저 검색
         if (enName) {
             let res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(enName)}`);
-            if (res.ok) {
-                json = await res.json();
-            }
+            if (res.ok) json = await res.json();
         }
 
-        // 2순위: 로마 이름 검색 결과가 없거나 로마 이름이 없는 경우 한글 이름으로 검색 시도
+        // 2. 결과가 없으면 한글 이름으로 한글 위키피디아 검색
         if (!json || !json.thumbnail) {
             let res = await fetch(`https://ko.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(krName)}`);
-            if (res.ok) {
-                json = await res.json();
-            }
+            if (res.ok) json = await res.json();
         }
 
-        // 최종 결과 출력
         if (json && json.thumbnail) {
             imgElement.src = json.thumbnail.source;
             imgElement.style.display = "block";
@@ -3678,10 +3662,10 @@ async function updateSidebar(name, desc) {
             loadingText.innerText = "이미지 없음";
         }
     } catch (e) {
-        console.error("이미지 로드 실패:", e);
-        loadingText.innerText = "로드 실패";
+        loadingText.innerText = "이미지 로드 실패";
     }
 }
+    
 function searchNode() {
     const val = document.getElementById("search-input").value.trim().toLowerCase();
     if (!val) return;
@@ -3699,3 +3683,4 @@ function dragended(event, d) { if (!event.active) simulation.alphaTarget(0); d.f
 
 </body>
 </html>
+
