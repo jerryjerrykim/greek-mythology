@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>그리스 로마 신화 관계도</title>
+    <title>그리스 로마 신화 관계도 - Jerry Optimized</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         :root { --primary: #3498db; --accent: #e67e22; --bg: #f8f9fa; --text: #2c3e50; }
@@ -14,27 +13,16 @@
             padding: 25px; box-shadow: -5px 0 15px rgba(0,0,0,0.05); 
             overflow-y: auto; z-index: 10;
         }
-        h2 { color: var(--text); border-bottom: 3px solid var(--primary); padding-bottom: 10px; margin-bottom: 20px; }
+        h2 { color: var(--text); border-bottom: 3px solid var(--primary); padding-bottom: 10px; }
         .search-container { margin-bottom: 20px; display: flex; gap: 8px; }
-        #search-input { flex: 1; padding: 10px; border: 1px solid #ced4da; border-radius: 8px; outline: none; }
+        #search-input { flex: 1; padding: 10px; border: 1px solid #ced4da; border-radius: 8px; }
         button { padding: 0 15px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        
         #info-card { background: #fff; border-radius: 12px; padding: 20px; border: 1px solid #f0f0f0; }
         #char-img-container { width: 100%; height: 220px; background: #eee; border-radius: 8px; margin-bottom: 15px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         #char-img { width: 100%; height: 100%; object-fit: contain; display: none; }
-        
-        /* 노드 및 링크 스타일 */
-        .node circle { stroke: #fff; stroke-width: 2px; transition: fill 0.3s, stroke 0.3s, r 0.3s; }
-        .node text { font-size: 13px; font-weight: 600; fill: #333; text-shadow: 0 1px 2px white; transition: opacity 0.3s; pointer-events: none; }
-        .link { stroke: #cbd5e0; stroke-opacity: 0.6; transition: stroke-opacity 0.3s, stroke 0.3s; }
-
-        /* 강조 효과 스타일 */
-        .node.selected circle { fill: #f1c40f !important; stroke: #f39c12; stroke-width: 4px; }
-        .node.dimmed { opacity: 0.15; }
-        .link.dimmed { stroke-opacity: 0.05; }
-        
-        /* 사이드바 리스트 스타일 */
-        .desc-item { margin-bottom: 12px; line-height: 1.6; color: #444; font-size: 0.95rem; border-left: 3px solid #eee; padding-left: 10px; }
+        .node circle { stroke: #fff; stroke-width: 2px; transition: all 0.3s; }
+        .node text { font-size: 13px; font-weight: 600; fill: #333; text-shadow: 0 1px 2px white; }
+        .link { stroke: #cbd5e0; stroke-opacity: 0.6; }
     </style>
 </head>
 <body>
@@ -53,7 +41,7 @@
             <img id="char-img" src="" alt="character image">
         </div>
         <h3 id="char-name">인물을 선택해 주세요</h3>
-        <div id="char-desc">관계망의 노드를 클릭하면 상세 정보가 나타납니다.</div>
+        <div id="char-desc">관계망의 노드를 클릭하면 상세 신화 이야기가 나타납니다.</div>
     </div>
 </div>
     
@@ -3564,31 +3552,12 @@ const node = container.append("g").selectAll("g")
 
 node.append("circle")
     .attr("r", d => 10 + Math.min(d.count * 1.5, 20))
-    .attr("fill", d => d.count > 15 ? "#e74c3c" : "#3498db");
+    .attr("fill", d => d.count > 8 ? "#e74c3c" : "#3498db");
 
 node.append("text")
     .attr("dy", d => 20 + Math.min(d.count * 1.5, 20))
     .attr("text-anchor", "middle")
     .text(d => d.id.split('(')[0]);
-     
-  /* 선택된 노드 (노란색 🔴) */
-    .node.selected circle {
-        fill: #f1c40f !important; /* 선명한 노란색 */
-        stroke: #f39c12;        /* 주황색 테두리 */
-        stroke-width: 4px;       /* 테두리 두께 강화 */
-        filter: drop-shadow(0 0 10px rgba(241, 196, 15, 0.8)); /* 발광 효과 */
-    }
-  /* 선택되지 않은 나머지 노드 (반투명 ⚪) */
-    .node.dimmed {
-        opacity: 0.2;
-    }
-
-    /* 연결되지 않은 링크 (반투명 ⚪) */
-    .link.dimmed {
-        stroke-opacity: 0.1;
-    }
-
-     
 
 simulation.on("tick", () => {
     link.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
@@ -3598,32 +3567,15 @@ simulation.on("tick", () => {
 
 // --- 4. 인터랙션 함수 ---
 function focusNode(d) {
-    // [추가된 로직 1] 기존 하이라이트 초기화
-    node.classed("selected", false).classed("dimmed", false);
-    link.classed("dimmed", false);
-
-    // [추가된 로직 2] 선택된 노드에 'selected' 클래스 추가
-    node.filter(n => n.id === d.id).classed("selected", true);
-
-    // 하이라이트 대상 식별 (본인 + 연결된 인물)
+    // 하이라이트 효과
     const connectedNodeIds = new Set([d.id]);
     data.links.forEach(l => {
         if (l.source.id === d.id) connectedNodeIds.add(l.target.id);
         if (l.target.id === d.id) connectedNodeIds.add(l.source.id);
     });
 
-    // [추가된 로직 3] 선택되지 않은 노드/링크에 'dimmed' 클래스 추가
-    node.filter(n => !connectedNodeIds.has(n.id)).classed("dimmed", true);
-    link.filter(l => l.source.id !== d.id && l.target.id !== d.id).classed("dimmed", true);
-
-// [추가된 로직 4] 선택된 노드의 크기를 동적으로 확대 (기존 크기 * 1.5배)
-    node.selectAll("circle")
-        .transition().duration(400)
-        .attr("r", n => {
-            const baseRadius = 10 + Math.min(n.count * 1.5, 20);
-            return n.id === d.id ? baseRadius * 1.5 : baseRadius; 
-        });
-
+    node.transition().duration(400).style("opacity", n => connectedNodeIds.has(n.id) ? 1 : 0.1);
+    link.transition().duration(400).style("stroke-opacity", l => (l.source.id === d.id || l.target.id === d.id) ? 1 : 0.05);
 
     // 사이드바 업데이트
     document.getElementById("char-name").innerText = d.id;
