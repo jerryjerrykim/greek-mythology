@@ -3854,9 +3854,24 @@ simulation.on("tick", () => {
 // 핵심 기능: 인물 포커스 및 정보 표시
 function focusNode(d) {
     // 시각적 강조 초기화 및 재설정
+   
+    const linkedNodeIds = new Set();
+    linkedNodeIds.add(d.id); // 자기 자신 포함
+        
+    data.links.forEach(l => {
+        if (l.source.id === d.id) linkedNodeIds.add(l.target.id);
+        if (l.target.id === d.id) linkedNodeIds.add(l.source.id);
+       });
+
+        link.transition().duration(300)
+        .style("stroke", l => (l.source.id === d.id || l.target.id === d.id) ? "#3498db" : "#adb5bd")
+        .style("stroke-opacity", l => (l.source.id === d.id || l.target.id === d.id) ? 1 : 0.1)
+        .style("stroke-width", l => (l.source.id === d.id || l.target.id === d.id) ? 3 : 1.5);
+        
     node.transition().duration(500).attr("fill", "#3498db").attr("r", 12);
     const selected = node.filter(n => n.id === d.id);
     selected.transition().duration(500).attr("fill", "#e67e22").attr("r", 20);
+
 
     // 사이드바 업데이트
     document.getElementById("selected-name").innerText = d.id;
