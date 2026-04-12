@@ -3577,15 +3577,25 @@ function focusNode(d) {
     node.transition().duration(400).style("opacity", n => connectedNodeIds.has(n.id) ? 1 : 0.1);
     link.transition().duration(400).style("stroke-opacity", l => (l.source.id === d.id || l.target.id === d.id) ? 1 : 0.05);
 
-    // 사이드바 업데이트
-    document.getElementById("char-name").innerText = d.id;
+document.getElementById("char-name").innerText = d.id;
+    
+    // 1. 선택된 인물과 관련된 모든 설명(description)을 가져옵니다.
     const relatedLinks = data.links.filter(l => l.source.id === d.id || l.target.id === d.id);
     
-    // Set을 활용하여 중복 설명 제거
-    const uniqueDescriptions = [...new Set(relatedLinks.map(l => l.description.trim()))];
+    // 2. 전체 설명을 하나의 문자열로 합친 후 "."(마침표)를 기준으로 분리합니다.
+    let allSentences = [];
+    relatedLinks.forEach(l => {
+        // 마침표로 나누고, 각 문장의 앞뒤 공백을 제거한 뒤 빈 문장이 아닌 것만 추출
+        const sentences = l.description.split('.').map(s => s.trim()).filter(s => s.length > 0);
+        allSentences = allSentences.concat(sentences);
+    });
 
-    document.getElementById("char-desc").innerHTML = uniqueDescriptions.length > 0 
-        ? uniqueDescriptions.map(desc => `<div class="desc-item">${desc}</div>`).join("")
+    // 3. Set을 활용하여 중복된 문장을 제거합니다.
+    const uniqueSentences = [...new Set(allSentences)];
+
+    // 4. 중복 제거된 각 문장 끝에 다시 마침표를 붙여 사이드바에 출력합니다.
+    document.getElementById("char-desc").innerHTML = uniqueSentences.length > 0 
+        ? uniqueSentences.map(sentence => `<div class="desc-item" style="margin-bottom: 10px; border-left: 3px solid #eee; padding-left: 10px;">• ${sentence}.</div>`).join("")
         : "연결된 상세 정보가 없습니다.";
 
     updateSidebarImage(d.id);
