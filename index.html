@@ -3594,22 +3594,25 @@ function focusNode(d) {
     );
 }
 
-     async function updateSidebarImage(name) {
+     
+async function updateSidebarImage(name) {
     const img = document.getElementById("char-img");
     const label = document.getElementById("img-loading");
+    const credit = document.getElementById("img-credit"); // 출처 표기 영역 (없으면 아래 추가 가이드 참고)
+
     img.style.display = "none";
-    label.innerText = "예술 작품 찾는 중...";
+    label.style.display = "block";
+    label.innerText = "이미지 찾는 중...";
 
     // 괄호 안의 영문 이름 추출 (예: 주피터(Jupiter) -> Jupiter)
     const enMatch = name.match(/\(([^)]+)\)/);
     const searchTerm = enMatch ? enMatch[1].trim() : name.split('(')[0].trim();
 
     try {
-        // 1. Unsplash API 호출
-        // 검색어 최적화를 위해 신 이름 뒤에 'greek mythology'를 붙여 검색합니다.
-        const unsplashRes = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(d.id + ' greek mythology')}&per_page=1`, {
+        // 1. Unsplash API 호출 (Client-ID 접두사 필수)
+        const unsplashRes = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(searchTerm + ' greek mythology')}&per_page=1`, {
             headers: {
-                Authorization: `KMOpUbbp5yjcMrUjdCF4XdRldGlP67MJfBdwH9_0poc` // 제리의 Access Key를 여기에 입력하세요
+                "Authorization": "Client-ID KMOpUbbp5yjcMrUjdCF4XdRldGlP67MJfBdwH9_0poc" 
             }
         });
         
@@ -3617,24 +3620,25 @@ function focusNode(d) {
 
         if (unsplashData.results && unsplashData.results.length > 0) {
             const photo = unsplashData.results[0];
-            img.src = photo.urls.regular; // 사이드바 크기에 적합한 regular 사이즈
+            img.src = photo.urls.regular;
             img.style.display = "block";
             label.style.display = "none";
             
-            // Unsplash 작가 정보 표기 (필수 사항)
+            // 작가 정보 업데이트 (HTML에 해당 요소가 있을 경우)
             if(credit) {
-                credit.innerHTML = `Photo by <a href="${photo.user.links.html}?utm_source=greek_mythology_app&utm_medium=referral" target="_blank" style="color: #999; text-decoration: none;">${photo.user.name}</a> on <a href="https://unsplash.com/?utm_source=greek_mythology_app&utm_medium=referral" target="_blank" style="color: #999; text-decoration: none;">Unsplash</a>`;
+                credit.innerHTML = `Photo by <a href="${photo.user.links.html}" target="_blank">${photo.user.name}</a> on Unsplash`;
             }
+            return;
         } else {
             throw new Error("Unsplash 결과 없음");
         }
 
     } catch (e) {
-        console.warn("Unsplash 로드 실패, 위키피디아로 전환:", e);
+        console.warn("Unsplash 로드 실패, 위키피디아 전환:", e);
         
-        // 2. Unsplash 실패 시 기존 위키피디아 로직 실행
+        // 2. 위키피디아 폴백
         try {
-            const wikiRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(d.id)}`);
+            const wikiRes = await fetch(`https://ko.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTerm)}`);
             const wikiData = await wikiRes.json();
             
             if (wikiData.thumbnail) {
@@ -3647,12 +3651,9 @@ function focusNode(d) {
             }
         } catch (wikiError) {
             label.innerText = "이미지 로드 중 오류 발생";
-            console.error("Final Error:", wikiError);
         }
     }
 }
-
-
      
 
 function searchNode() {
