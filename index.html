@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>그리스 로마 신화 관계도 - Jerry Optimized</title>
+    <title>그리스 로마 신화 관계도 </title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         :root { --primary: #3498db; --accent: #e67e22; --bg: #f8f9fa; --text: #2c3e50; }
@@ -3613,22 +3613,24 @@ async function updateSidebarImage(name) {
     const label = document.getElementById("img-loading");
     const credit = document.getElementById("img-credit");
 
+    // 초기 상태 설정
     img.style.display = "none";
     label.style.display = "block";
-    label.innerText = "이미지 찾는 중...";
+    label.innerText = "이미지 최적화 검색 중...";
+    if(credit) credit.innerText = "";
 
-    // 괄호 안의 영문 이름 추출 (예: 주피터(Jupiter) -> Jupiter)
+    // 이름 처리: 괄호 안의 영문 이름 우선 추출
     const enMatch = name.match(/\(([^)]+)\)/);
-    const searchTerm = enMatch ? enMatch[1].trim() : name.split('(')[0].trim();
+    const enName = enMatch ? enMatch[1].trim() : name.split('(')[0].trim();
+    const krName = name.split('(')[0].trim();
 
     try {
-        // 1. Unsplash API 호출
-        const unsplashRes = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(searchTerm + ' greek mythology')}&per_page=1`, {
+        // --- [1단계] Unsplash API (고퀄리티 이미지) ---
+        const unsplashRes = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(enName + ' greek mythology')}&per_page=1`, {
             headers: {
                 "Authorization": "Client-ID KMOpUbbp5yjcMrUjdCF4XdRldGlP67MJfBdwH9_0poc" 
             }
         });
-        
         const unsplashData = await unsplashRes.json();
 
         if (unsplashData.results && unsplashData.results.length > 0) {
@@ -3636,36 +3638,44 @@ async function updateSidebarImage(name) {
             img.src = photo.urls.regular;
             img.style.display = "block";
             label.style.display = "none";
-            
-            if(credit) {
-                credit.innerHTML = `Photo by <a href="${photo.user.links.html}" target="_blank">${photo.user.name}</a> on Unsplash`;
-            }
-            return;
-        } else {
-            throw new Error("Unsplash 결과 없음");
+            if(credit) credit.innerHTML = `Photo by <a href="${photo.user.links.html}" target="_blank">${photo.user.name}</a> on Unsplash`;
+            return; // 찾았으므로 종료
         }
+        console.log("Unsplash에 결과 없음, 영어 위키로 전환");
 
-    } catch (e) {
-        console.warn("Unsplash 로드 실패, 영어 위키피디아 전환:", e);
-        
-        // 2. 영어 위키피디아 폴백
-        try {
-            const wikiRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTerm)}`);
-            const wikiData = await wikiRes.json();
-            
-            if (wikiData.thumbnail) {
-                img.src = wikiData.thumbnail.source;
+        // --- [2단계] 영어 위키피디아 (방대한 데이터) ---
+        const enWikiRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(enName)}`);
+        if (enWikiRes.ok) {
+            const enWikiData = await enWikiRes.json();
+            if (enWikiData.thumbnail) {
+                img.src = enWikiData.thumbnail.source;
                 img.style.display = "block";
                 label.style.display = "none";
                 if(credit) credit.innerText = "Source: English Wikipedia";
-            } else {
-                label.innerText = "관련 이미지를 찾을 수 없습니다.";
-                if(credit) credit.innerText = "";
+                return; // 찾았으므로 종료
             }
-        } catch (wikiError) {
-            label.innerText = "이미지 로드 중 오류 발생";
-            if(credit) credit.innerText = "";
         }
+        console.log("영어 위키에 결과 없음, 한글 위키로 전환");
+
+        // --- [3단계] 한국어 위키피디아 (최종 보루) ---
+        const krWikiRes = await fetch(`https://ko.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(krName)}`);
+        if (krWikiRes.ok) {
+            const krWikiData = await krWikiRes.json();
+            if (krWikiData.thumbnail) {
+                img.src = krWikiData.thumbnail.source;
+                img.style.display = "block";
+                label.style.display = "none";
+                if(credit) credit.innerText = "Source: 한국어 위키백과";
+                return;
+            }
+        }
+
+        // 모든 단계 실패 시
+        label.innerText = "이미지를 찾을 수 없습니다.";
+
+    } catch (e) {
+        console.error("이미지 로드 과정 중 오류:", e);
+        label.innerText = "이미지 로드 중 오류 발생";
     }
 }
      
