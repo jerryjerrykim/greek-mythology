@@ -3618,7 +3618,7 @@ function focusNode(d) {
             if (metObjData.primaryImageSmall) {
                 img.src = metObjData.primaryImageSmall;
                 img.style.display = "block";
-                label.innerText = `The Met: ${metObjData.title}`; // 작품명 표시
+                label.innerText = ``; // 작품명 표시
                 return;
             }
         }
@@ -3630,7 +3630,7 @@ function focusNode(d) {
         if (wikiData.thumbnail) {
             img.src = wikiData.thumbnail.source;
             img.style.display = "block";
-            label.innerText = "Wikipedia Source";
+            label.innerText = "";
         } else {
             label.innerText = "관련 이미지를 찾을 수 없습니다.";
         }
