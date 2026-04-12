@@ -3605,41 +3605,55 @@ function focusNode(d) {
     const searchTerm = enMatch ? enMatch[1].trim() : name.split('(')[0].trim();
 
     try {
-        // 1단계: 메트로폴리탄 미술관 API 검색
-        const metSearchRes = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/search?q=${encodeURIComponent(searchTerm)}&hasImages=true`);
-        const metSearchData = await metSearchRes.json();
-
-        if (metSearchData.total > 0) {
-            // 결과 중 첫 번째 오브젝트의 상세 정보 가져오기
-            const objectId = metSearchData.objectIDs[0];
-            const metObjRes = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${objectId}`);
-            const metObjData = await metObjRes.json();
-
-            if (metObjData.primaryImageSmall) {
-                img.src = metObjData.primaryImageSmall;
-                img.style.display = "block";
-                label.innerText = ``; // 작품명 표시
-                return;
+        // 1. Unsplash API 호출
+        // 검색어 최적화를 위해 신 이름 뒤에 'greek mythology'를 붙여 검색합니다.
+        const unsplashRes = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(d.id + ' greek mythology')}&per_page=1`, {
+            headers: {
+                Authorization: `KMOpUbbp5yjcMrUjdCF4XdRldGlP67MJfBdwH9_0poc` // 제리의 Access Key를 여기에 입력하세요
             }
+        });
+        
+        const unsplashData = await unsplashRes.json();
+
+        if (unsplashData.results && unsplashData.results.length > 0) {
+            const photo = unsplashData.results[0];
+            img.src = photo.urls.regular; // 사이드바 크기에 적합한 regular 사이즈
+            img.style.display = "block";
+            label.style.display = "none";
+            
+            // Unsplash 작가 정보 표기 (필수 사항)
+            if(credit) {
+                credit.innerHTML = `Photo by <a href="${photo.user.links.html}?utm_source=greek_mythology_app&utm_medium=referral" target="_blank" style="color: #999; text-decoration: none;">${photo.user.name}</a> on <a href="https://unsplash.com/?utm_source=greek_mythology_app&utm_medium=referral" target="_blank" style="color: #999; text-decoration: none;">Unsplash</a>`;
+            }
+        } else {
+            throw new Error("Unsplash 결과 없음");
         }
 
-        // 2단계: 메트 API에 없을 경우 위키피디아로 폴백(Fallback)
-        const wikiRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTerm)}`);
-        const wikiData = await wikiRes.json();
-        
-        if (wikiData.thumbnail) {
-            img.src = wikiData.thumbnail.source;
-            img.style.display = "block";
-            label.innerText = "";
-        } else {
-            label.innerText = "관련 이미지를 찾을 수 없습니다.";
-        }
     } catch (e) {
-        label.innerText = "데이터 로드 중 오류 발생";
-        console.error("Image Load Error:", e);
+        console.warn("Unsplash 로드 실패, 위키피디아로 전환:", e);
+        
+        // 2. Unsplash 실패 시 기존 위키피디아 로직 실행
+        try {
+            const wikiRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(d.id)}`);
+            const wikiData = await wikiRes.json();
+            
+            if (wikiData.thumbnail) {
+                img.src = wikiData.thumbnail.source;
+                img.style.display = "block";
+                label.style.display = "none";
+                if(credit) credit.innerText = "Source: Wikipedia";
+            } else {
+                label.innerText = "관련 이미지를 찾을 수 없습니다.";
+            }
+        } catch (wikiError) {
+            label.innerText = "이미지 로드 중 오류 발생";
+            console.error("Final Error:", wikiError);
+        }
     }
 }
 
+
+     
 
 function searchNode() {
     const val = document.getElementById("search-input").value.trim().toLowerCase();
