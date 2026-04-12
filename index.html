@@ -35,14 +35,18 @@
         <input type="text" id="search-input" placeholder="이름 검색 (예: 주피터)">
         <button onclick="searchNode()">검색</button>
     </div>
-    <div id="info-card">
-        <div id="char-img-container">
-            <div id="img-loading">대상을 선택하세요</div>
-            <img id="char-img" src="" alt="character image">
-        </div>
-        <h3 id="char-name">인물을 선택해 주세요</h3>
-        <div id="char-desc">관계망의 노드를 클릭하면 상세 신화 이야기가 나타납니다.</div>
+<div id="info-card">
+    <div id="img-loading" style="font-size: 0.9rem; color: #888; text-align: center; margin-bottom: 10px; min-height: 1.2em;">대상을 선택하세요</div>
+    
+    <div id="char-img-container" style="width: 100%; height: 220px; background: #f0f0f0; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+        <img id="char-img" src="" alt="character image" style="width: 100%; height: 100%; object-fit: contain; display: none;">
     </div>
+
+    <div id="char-title" style="font-size: 0.85rem; color: #666; text-align: center; margin-top: 10px; margin-bottom: 15px; font-style: italic; min-height: 1.2em;"></div>
+    
+    <h3 id="char-name" style="margin-top: 20px;">인물을 선택해 주세요</h3>
+    <div id="char-desc">관계망의 노드를 클릭하면 상세 정보가 나타납니다.</div>
+</div>
 </div>
     
  <script>
