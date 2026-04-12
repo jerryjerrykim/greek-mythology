@@ -60,7 +60,7 @@
     { "id": "니오베" },
     { "id": "다이달로스(Daedalus)" },
     { "id": "다이아나" },
-    { "id": "다프네(Daphne)" },
+    { "id": "다프네(Daphne)" },6
     { "id": "데우칼리온(Deucalion)" },
     { "id": "데이아니라(Dejanira)" },
     { "id": "드리오페(Dryope)" },
@@ -3594,49 +3594,58 @@ function focusNode(d) {
     );
 }
 
-     async function updateSidebarImage(name) {
+async function updateSidebarImage(name) {
     const img = document.getElementById("char-img");
-    const label = document.getElementById("img-loading");
-    img.style.display = "none";
-    label.innerText = "예술 작품 찾는 중...";
+    const label = document.getElementById("img-loading"); // 상단 로딩 메시지
+    const titleDisplay = document.getElementById("char-title"); // 하단 작품 제목
 
-    // 괄호 안의 영문 이름 추출 (예: 주피터(Jupiter) -> Jupiter)
+    // 초기화
+    img.style.display = "none";
+    label.innerText = "예술 작품을 찾는 중...";
+    titleDisplay.innerText = "";
+
     const enMatch = name.match(/\(([^)]+)\)/);
     const searchTerm = enMatch ? enMatch[1].trim() : name.split('(')[0].trim();
 
     try {
-        // 1단계: 메트로폴리탄 미술관 API 검색
+        // 1단계: The Met API 검색
         const metSearchRes = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/search?q=${encodeURIComponent(searchTerm)}&hasImages=true`);
         const metSearchData = await metSearchRes.json();
 
         if (metSearchData.total > 0) {
-            // 결과 중 첫 번째 오브젝트의 상세 정보 가져오기
             const objectId = metSearchData.objectIDs[0];
             const metObjRes = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${objectId}`);
             const metObjData = await metObjRes.json();
 
             if (metObjData.primaryImageSmall) {
                 img.src = metObjData.primaryImageSmall;
-                img.style.display = "block";
-                label.innerText = `The Met: ${metObjData.title}`; // 작품명 표시
+                img.onload = () => {
+                    img.style.display = "block";
+                    label.innerText = "작품 로드 완료"; // 상단 메시지 변경
+                    titleDisplay.innerText = `Work: ${metObjData.title}`; // 이미지 하단에 제목 표시
+                };
                 return;
             }
         }
 
-        // 2단계: 메트 API에 없을 경우 위키피디아로 폴백(Fallback)
+        // 2단계: 위키피디아 폴백
         const wikiRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTerm)}`);
         const wikiData = await wikiRes.json();
         
         if (wikiData.thumbnail) {
             img.src = wikiData.thumbnail.source;
-            img.style.display = "block";
-            label.innerText = "Wikipedia Source";
+            img.onload = () => {
+                img.style.display = "block";
+                label.innerText = "Wikipedia 정보";
+                titleDisplay.innerText = "Source: Wikimedia Commons";
+            };
         } else {
-            label.innerText = "관련 이미지를 찾을 수 없습니다.";
+            label.innerText = "검색 결과 없음";
+            titleDisplay.innerText = "관련 이미지를 찾을 수 없습니다.";
         }
     } catch (e) {
-        label.innerText = "데이터 로드 중 오류 발생";
-        console.error("Image Load Error:", e);
+        label.innerText = "오류 발생";
+        console.error(e);
     }
 }
 
