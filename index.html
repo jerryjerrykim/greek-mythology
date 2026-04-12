@@ -35,18 +35,14 @@
         <input type="text" id="search-input" placeholder="이름 검색 (예: 주피터)">
         <button onclick="searchNode()">검색</button>
     </div>
-<div id="info-card">
-    <div id="img-loading" style="font-size: 0.9rem; color: #888; text-align: center; margin-bottom: 10px; min-height: 1.2em;">대상을 선택하세요</div>
-    
-    <div id="char-img-container" style="width: 100%; height: 220px; background: #f0f0f0; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
-        <img id="char-img" src="" alt="character image" style="width: 100%; height: 100%; object-fit: contain; display: none;">
+    <div id="info-card">
+        <div id="char-img-container">
+            <div id="img-loading">대상을 선택하세요</div>
+            <img id="char-img" src="" alt="character image">
+        </div>
+        <h3 id="char-name">인물을 선택해 주세요</h3>
+        <div id="char-desc">관계망의 노드를 클릭하면 상세 신화 이야기가 나타납니다.</div>
     </div>
-
-    <div id="char-title" style="font-size: 0.85rem; color: #666; text-align: center; margin-top: 10px; margin-bottom: 15px; font-style: italic; min-height: 1.2em;"></div>
-    
-    <h3 id="char-name" style="margin-top: 20px;">인물을 선택해 주세요</h3>
-    <div id="char-desc">관계망의 노드를 클릭하면 상세 정보가 나타납니다.</div>
-</div>
 </div>
     
  <script>
@@ -64,7 +60,7 @@
     { "id": "니오베" },
     { "id": "다이달로스(Daedalus)" },
     { "id": "다이아나" },
-    { "id": "다프네(Daphne)" },6
+    { "id": "다프네(Daphne)" },
     { "id": "데우칼리온(Deucalion)" },
     { "id": "데이아니라(Dejanira)" },
     { "id": "드리오페(Dryope)" },
@@ -3598,58 +3594,49 @@ function focusNode(d) {
     );
 }
 
-async function updateSidebarImage(name) {
+     async function updateSidebarImage(name) {
     const img = document.getElementById("char-img");
-    const label = document.getElementById("img-loading"); // 상단 로딩 메시지
-    const titleDisplay = document.getElementById("char-title"); // 하단 작품 제목
-
-    // 초기화
+    const label = document.getElementById("img-loading");
     img.style.display = "none";
-    label.innerText = "예술 작품을 찾는 중...";
-    titleDisplay.innerText = "";
+    label.innerText = "예술 작품 찾는 중...";
 
+    // 괄호 안의 영문 이름 추출 (예: 주피터(Jupiter) -> Jupiter)
     const enMatch = name.match(/\(([^)]+)\)/);
     const searchTerm = enMatch ? enMatch[1].trim() : name.split('(')[0].trim();
 
     try {
-        // 1단계: The Met API 검색
+        // 1단계: 메트로폴리탄 미술관 API 검색
         const metSearchRes = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/search?q=${encodeURIComponent(searchTerm)}&hasImages=true`);
         const metSearchData = await metSearchRes.json();
 
         if (metSearchData.total > 0) {
+            // 결과 중 첫 번째 오브젝트의 상세 정보 가져오기
             const objectId = metSearchData.objectIDs[0];
             const metObjRes = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${objectId}`);
             const metObjData = await metObjRes.json();
 
             if (metObjData.primaryImageSmall) {
                 img.src = metObjData.primaryImageSmall;
-                img.onload = () => {
-                    img.style.display = "block";
-                    label.innerText = "작품 로드 완료"; // 상단 메시지 변경
-                    titleDisplay.innerText = `Work: ${metObjData.title}`; // 이미지 하단에 제목 표시
-                };
+                img.style.display = "block";
+                label.innerText = `The Met: ${metObjData.title}`; // 작품명 표시
                 return;
             }
         }
 
-        // 2단계: 위키피디아 폴백
+        // 2단계: 메트 API에 없을 경우 위키피디아로 폴백(Fallback)
         const wikiRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTerm)}`);
         const wikiData = await wikiRes.json();
         
         if (wikiData.thumbnail) {
             img.src = wikiData.thumbnail.source;
-            img.onload = () => {
-                img.style.display = "block";
-                label.innerText = "Wikipedia 정보";
-                titleDisplay.innerText = "Source: Wikimedia Commons";
-            };
+            img.style.display = "block";
+            label.innerText = "Wikipedia Source";
         } else {
-            label.innerText = "검색 결과 없음";
-            titleDisplay.innerText = "관련 이미지를 찾을 수 없습니다.";
+            label.innerText = "관련 이미지를 찾을 수 없습니다.";
         }
     } catch (e) {
-        label.innerText = "오류 발생";
-        console.error(e);
+        label.innerText = "데이터 로드 중 오류 발생";
+        console.error("Image Load Error:", e);
     }
 }
 
