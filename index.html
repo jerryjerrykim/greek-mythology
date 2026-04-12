@@ -3608,11 +3608,10 @@ document.getElementById("char-name").innerText = d.id;
     );
 }
 
-     
 async function updateSidebarImage(name) {
     const img = document.getElementById("char-img");
     const label = document.getElementById("img-loading");
-    const credit = document.getElementById("img-credit"); // 출처 표기 영역 (없으면 아래 추가 가이드 참고)
+    const credit = document.getElementById("img-credit");
 
     img.style.display = "none";
     label.style.display = "block";
@@ -3623,7 +3622,7 @@ async function updateSidebarImage(name) {
     const searchTerm = enMatch ? enMatch[1].trim() : name.split('(')[0].trim();
 
     try {
-        // 1. Unsplash API 호출 (Client-ID 접두사 필수)
+        // 1. Unsplash API 호출
         const unsplashRes = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(searchTerm + ' greek mythology')}&per_page=1`, {
             headers: {
                 "Authorization": "Client-ID KMOpUbbp5yjcMrUjdCF4XdRldGlP67MJfBdwH9_0poc" 
@@ -3638,7 +3637,6 @@ async function updateSidebarImage(name) {
             img.style.display = "block";
             label.style.display = "none";
             
-            // 작가 정보 업데이트 (HTML에 해당 요소가 있을 경우)
             if(credit) {
                 credit.innerHTML = `Photo by <a href="${photo.user.links.html}" target="_blank">${photo.user.name}</a> on Unsplash`;
             }
@@ -3648,28 +3646,29 @@ async function updateSidebarImage(name) {
         }
 
     } catch (e) {
-        console.warn("Unsplash 로드 실패, 위키피디아 전환:", e);
+        console.warn("Unsplash 로드 실패, 영어 위키피디아 전환:", e);
         
-        // 2. 위키피디아 폴백
+        // 2. 영어 위키피디아 폴백
         try {
-            const wikiRes = await fetch(`https://ko.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTerm)}`);
+            const wikiRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTerm)}`);
             const wikiData = await wikiRes.json();
             
             if (wikiData.thumbnail) {
                 img.src = wikiData.thumbnail.source;
                 img.style.display = "block";
                 label.style.display = "none";
-                if(credit) credit.innerText = "Source: Wikipedia";
+                if(credit) credit.innerText = "Source: English Wikipedia";
             } else {
                 label.innerText = "관련 이미지를 찾을 수 없습니다.";
+                if(credit) credit.innerText = "";
             }
         } catch (wikiError) {
             label.innerText = "이미지 로드 중 오류 발생";
+            if(credit) credit.innerText = "";
         }
     }
 }
      
-
 function searchNode() {
     const val = document.getElementById("search-input").value.trim().toLowerCase();
     const target = data.nodes.find(n => n.id.toLowerCase().includes(val));
