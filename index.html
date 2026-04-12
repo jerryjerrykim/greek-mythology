@@ -3579,10 +3579,14 @@ function focusNode(d) {
 
     // 사이드바 업데이트
     document.getElementById("char-name").innerText = d.id;
-    const rels = data.links.filter(l => l.source.id === d.id || l.target.id === d.id);
-    document.getElementById("char-desc").innerHTML = rels.length > 0 
-        ? [...new Set(rels.map(r => r.description))].map(s => `<p>• ${s}</p>`).join("")
-        : "상세 정보가 없습니다.";
+    const relatedLinks = data.links.filter(l => l.source.id === d.id || l.target.id === d.id);
+    
+    // Set을 활용하여 중복 설명 제거
+    const uniqueDescriptions = [...new Set(relatedLinks.map(l => l.description.trim()))];
+
+    document.getElementById("char-desc").innerHTML = uniqueDescriptions.length > 0 
+        ? uniqueDescriptions.map(desc => `<div class="desc-item">${desc}</div>`).join("")
+        : "연결된 상세 정보가 없습니다.";
 
     updateSidebarImage(d.id);
 
@@ -3666,6 +3670,7 @@ function dragstarted(event, d) { if (!event.active) simulation.alphaTarget(0.3).
 function dragged(event, d) { d.fx = event.x; d.fy = event.y; }
 function dragended(event, d) { if (!event.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }
 
+   
 window.addEventListener('resize', () => {
     width = window.innerWidth - sidebarWidth;
     height = window.innerHeight;
